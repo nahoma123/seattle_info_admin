@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import categoryService from '../services/categoryService'; // categoryService has updated methods
+import categoryService from '../services/categoryService';
 
 const styles = {
   container: { padding: '20px', maxWidth: '800px', margin: '0 auto' },
@@ -37,14 +37,11 @@ const styles = {
     borderRadius: '4px',
     marginRight: '10px'
   },
-  buttonDisabled: { backgroundColor: '#aaa' },
-  listContainer: { marginTop: '20px' },
-  table: { width: '100%', borderCollapse: 'collapse', marginTop: '10px' },
-  th: { border: '1px solid #ddd', padding: '10px', background: '#f4f4f4', textAlign: 'left' },
-  td: { border: '1px solid #ddd', padding: '10px', textAlign: 'left' },
+  buttonDisabled: { backgroundColor: '#aaa', cursor: 'not-allowed' }, // For general disabled state
   actionButton: { padding: '5px 10px', cursor: 'pointer', marginRight: '5px', border: 'none', borderRadius: '4px' },
   editButton: { backgroundColor: '#ffc107' },
   deleteButton: { backgroundColor: '#dc3545', color: 'white' },
+  deleteButtonDisabled: { backgroundColor: '#secondary', color: '#6c757d', cursor: 'not-allowed', opacity: 0.65 }, // Specific style for disabled delete
   error: { color: 'red', marginTop: '10px', marginBottom: '10px'},
   loading: { marginTop: '10px', marginBottom: '10px'},
   success: { color: 'green', marginTop: '10px', marginBottom: '10px'},
@@ -64,16 +61,16 @@ const CategoryManagementPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 10; // Or get from API if dynamic
+  const PAGE_SIZE = 10;
 
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     setError('');
     try {
       const params = { page: currentPage, page_size: PAGE_SIZE };
-      const response = await categoryService.getCategories(params); // Expects { data, pagination }
+      const response = await categoryService.getCategories(params);
       setCategories(response.data || []);
-      setPagination(response.pagination || { current_page: currentPage, page_size: PAGE_SIZE, total_records: 0, total_pages: 1 });
+      setPagination(response.pagination || { current_page: currentPage, page_size: PAGE_SIZE, total_records: (response.data || []).length, total_pages: Math.ceil((response.data || []).length / PAGE_SIZE) });
     } catch (err) {
       setError(err.message || 'Failed to fetch categories.');
       setCategories([]);
@@ -81,7 +78,7 @@ const CategoryManagementPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage]); // Dependency on currentPage
+  }, [currentPage]);
 
   useEffect(() => {
     fetchCategories();
@@ -101,13 +98,12 @@ const CategoryManagementPage = () => {
         name: newCategoryName,
         description: newCategoryDescription
       };
-      // Uses corrected createCategory targeting POST /api/v1/categories/admin
       await categoryService.createCategory(newCategoryData);
       setSuccessMessage(`Category '${newCategoryName}' created successfully!`);
       setNewCategoryName('');
       setNewCategoryDescription('');
-      setCurrentPage(1); // Go to first page to see new category if list was empty or on another page
-      fetchCategories(); // Refresh list
+      setCurrentPage(1);
+      fetchCategories();
     } catch (err) {
       setError(err.message || 'Failed to create category.');
     } finally {
@@ -120,28 +116,26 @@ const CategoryManagementPage = () => {
   };
 
   const handleEditCategory = (categoryId) => {
-    // Placeholder for edit functionality
     alert(`Edit category ID: ${categoryId} - (Not implemented yet)`);
-    // In a real app, this would open a modal or navigate to an edit form.
   };
 
   const handleDeleteCategory = async (categoryId, categoryName) => {
-    // Placeholder for delete functionality
-    if (window.confirm(`Are you sure you want to delete category "${categoryName}" (ID: ${categoryId})?`)) {
-      setIsLoading(true); // Use general loading or a row-specific one
-      setError('');
-      setSuccessMessage('');
-      try {
-        await categoryService.deleteCategoryAdmin(categoryId);
-        setSuccessMessage(`Category "${categoryName}" deleted successfully.`);
-        fetchCategories(); // Refresh the list
-      } catch (err) {
-        setError(err.message || `Failed to delete category "${categoryName}".`);
-        setIsLoading(false);
-      }
-    }
+    alert(`Category deletion for "${categoryName}" (ID: ${categoryId}) is temporarily disabled.`);
+    // Original delete logic - commented out:
+    // if (window.confirm(`Are you sure you want to delete category "${categoryName}" (ID: ${categoryId})?`)) {
+    //   setIsLoading(true);
+    //   setError('');
+    //   setSuccessMessage('');
+    //   try {
+    //     await categoryService.deleteCategoryAdmin(categoryId);
+    //     setSuccessMessage(`Category "${categoryName}" deleted successfully.`);
+    //     fetchCategories();
+    //   } catch (err) {
+    //     setError(err.message || `Failed to delete category "${categoryName}".`);
+    //     setIsLoading(false);
+    //   }
+    // }
   };
-
 
   return (
     <div style={styles.container}>
@@ -150,33 +144,18 @@ const CategoryManagementPage = () => {
       <div style={styles.formContainer}>
         <h2>Add New Category</h2>
         <form onSubmit={handleCreateCategory}>
+          {/* Form inputs remain the same */}
           <div style={styles.inputGroup}>
             <label htmlFor="categoryName" style={styles.label}>Name:</label>
-            <input
-              type="text"
-              id="categoryName"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              style={styles.input}
-              required
-            />
+            <input type="text" id="categoryName" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} style={styles.input} required />
           </div>
           <div style={styles.inputGroup}>
             <label htmlFor="categoryDescription" style={styles.label}>Description:</label>
-            <textarea
-              id="categoryDescription"
-              value={newCategoryDescription}
-              onChange={(e) => setNewCategoryDescription(e.target.value)}
-              style={styles.textarea}
-            />
+            <textarea id="categoryDescription" value={newCategoryDescription} onChange={(e) => setNewCategoryDescription(e.target.value)} style={styles.textarea} />
           </div>
           {error && !isSubmitting && <p style={styles.error}>{error}</p>} {/* Show general errors when not submitting form */}
           {successMessage && <p style={styles.success}>{successMessage}</p>}
-          <button
-            type="submit"
-            style={isSubmitting ? {...styles.button, ...styles.buttonDisabled} : styles.button}
-            disabled={isSubmitting}
-          >
+          <button type="submit" style={isSubmitting ? {...styles.button, ...styles.buttonDisabled} : styles.button} disabled={isSubmitting}>
             {isSubmitting ? 'Creating...' : 'Create Category'}
           </button>
         </form>
@@ -208,8 +187,22 @@ const CategoryManagementPage = () => {
                     <td style={styles.td}>{category.slug}</td>
                     <td style={styles.td}>{category.description}</td>
                     <td style={styles.td}>
-                      <button onClick={() => handleEditCategory(category.id)} style={{...styles.actionButton, ...styles.editButton}} disabled={isLoading}>Edit</button>
-                      <button onClick={() => handleDeleteCategory(category.id, category.name)} style={{...styles.actionButton, ...styles.deleteButton}} disabled={isLoading}>Delete</button>
+                      <button
+                        onClick={() => handleEditCategory(category.id)}
+                        style={{...styles.actionButton, ...styles.editButton}}
+                        disabled={isLoading} // Keep edit disabled during general loading for now
+                        title="Edit - Not implemented yet"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(category.id, category.name)}
+                        style={{...styles.actionButton, ...styles.deleteButtonDisabled}} // Use disabled style
+                        disabled // Always disabled
+                        title="Delete - Temporarily disabled"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
