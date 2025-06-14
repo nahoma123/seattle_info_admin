@@ -1,54 +1,96 @@
-// Mock authentication service
+import { initializeApp } from 'firebase/app';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOutInternal, // Alias to avoid naming conflict if we export signOut
+  onAuthStateChanged as firebaseOnAuthStateChanged // Alias for clarity
+} from 'firebase/auth';
+import { firebaseConfig } from '../firebaseConfig'; // Import the configuration
 
-// In a real app with a backend endpoint for exchanging user/pass for a Firebase token:
-/*
-import axios from 'axios';
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+console.log("Firebase Auth initialized in authService.js");
 
-const API_URL = '/api/v1/auth'; // Or your specific auth endpoint
-
-export const loginWithCredentials = async (email, password) => {
+/**
+ * Signs in a user with email and password using Firebase.
+ * @param {string} email - The user's email.
+ * @param {string} password - The user's password.
+ * @returns {Promise<string>} A promise that resolves to the Firebase ID token.
+ */
+export const signInUser = async (email, password) => {
   try {
-    // This endpoint might not exist if Firebase client SDK handles all login
-    const response = await axios.post(`${API_URL}/login`, { email, password });
-    return response.data; // Should include the token and user info
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    const idToken = await user.getIdToken();
+    console.log("Firebase ID Token (after sign-in in authService):", idToken);
+    return { token: idToken, user: { email: user.email, uid: user.uid } }; // Return token and basic user info
   } catch (error) {
-    throw error.response?.data || error.message;
+    console.error("Firebase Sign In Error in authService:", error);
+    // Transform Firebase error to a more generic error message if desired
+    throw new Error(error.message || 'Failed to sign in.');
   }
 };
-*/
 
-// For Firebase, client SDK usually handles login and gives a token.
-// This service might be more about validating a token with /api/v1/auth/me
-// or handling app-specific logout requirements.
-
-export const verifyTokenAndGetUser = async (token) => {
-  // Placeholder: In a real app, call your backend's /api/v1/auth/me
-  // with the token to get user details and verify admin role.
-  console.log("verifyTokenAndGetUser called with token:", token);
-  if (token && token.startsWith("fake-firebase-admin-id-token")) {
-    return Promise.resolve({ email: 'admin@example.com', role: 'admin', id: 'mockAdminId' });
-  } else if (token) { // if it's a pasted real token, we can't verify without a backend call
-    return Promise.resolve({ email: 'pasted_token_user@example.com', role: 'admin', id: 'pastedAdminId'});
+/**
+ * Signs out the current Firebase user.
+ * @returns {Promise<void>}
+ */
+export const signOutUser = async () => {
+  try {
+    await firebaseSignOutInternal(auth);
+    console.log("User signed out from Firebase in authService.");
+  } catch (error) {
+    console.error("Firebase Sign Out Error in authService:", error);
+    throw new Error(error.message || 'Failed to sign out.');
   }
-  return Promise.reject("Invalid or mock token for verification service");
+};
+
+/**
+ * Registers a callback to be invoked when the Firebase auth state changes.
+ * @param {function} callback - The function to call with the user object (or null).
+ * @returns {import('firebase/auth').Unsubscribe} The unsubscribe function.
+ */
+export const onAuthUserChanged = (callback) => {
+  return firebaseOnAuthStateChanged(auth, callback);
 };
 
 
-// Logout function might involve calling a backend endpoint if necessary,
-// e.g., to invalidate a server-side session or token.
-// For Firebase, client-side sign-out is often sufficient.
-export const logoutUser = async () => {
-  // Perform any backend logout tasks if needed
-  console.log("authService: logoutUser called");
-  return Promise.resolve();
+// Placeholder for verifyTokenAndGetUser which might call your backend's /api/v1/auth/me
+// This is important if the Firebase token itself doesn't contain all necessary admin claims/roles
+// and you need your backend to confirm the user's admin status.
+export const verifyTokenAndGetAdminDetails = async (token) => {
+  // For now, assume token is enough or backend handles admin role verification on each protected route.
+  // If your /api/v1/auth/me endpoint exists and returns admin-specific details:
+  /*
+  try {
+    const response = await axios.get('/api/v1/auth/me', { // Assuming proxy is set up
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data; // e.g., { id, email, role, ... }
+  } catch (error) {
+    console.error('Error verifying token with backend /auth/me', error);
+    throw error;
+  }
+  */
+  // Mocking for now if the token itself is considered as admin proof
+  if (token) {
+    // In a real scenario, you might decode the token here (if not done by Firebase)
+    // or simply pass it to the context. The backend will do the ultimate validation.
+    // For admin dashboard, usually the user object from Firebase (email, uid) is enough for client-side,
+    // and backend API calls using this token will determine if user has admin rights.
+    return Promise.resolve({ role: 'admin' }); // Placeholder
+  }
+  return Promise.reject("No token to verify.");
 };
 
-// For this MVP, the core logic of setting/clearing token is in AuthContext.
-// This service file is a placeholder for more complex API interactions.
+
 const authService = {
-  // loginWithCredentials, // if you had such an endpoint
-  verifyTokenAndGetUser,
-  logoutUser,
+  signInUser,
+  signOutUser,
+  onAuthUserChanged,
+  verifyTokenAndGetAdminDetails,
+  // getAuth, // Expose auth instance if needed elsewhere, though usually encapsulated.
 };
 
 export default authService;
