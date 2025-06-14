@@ -1,25 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import categoryService from '../services/categoryService';
 
-const styles = {
-  container: { padding: '20px', maxWidth: '800px', margin: '0 auto' },
-  title: { marginBottom: '20px' },
-  formContainer: { background: '#f9f9f9', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', marginBottom: '30px' },
-  inputGroup: { marginBottom: '15px' },
-  label: { display: 'block', marginBottom: '5px', fontWeight: 'bold' },
-  input: { width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' },
-  textarea: { width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box', minHeight: '80px' },
-  button: { padding: '10px 15px', cursor: 'pointer', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', marginRight: '10px' },
-  buttonDisabled: { backgroundColor: '#aaa', cursor: 'not-allowed' },
-  actionButton: { padding: '5px 10px', cursor: 'pointer', marginRight: '5px', border: 'none', borderRadius: '4px' },
-  editButton: { backgroundColor: '#ffc107' },
-  deleteButtonDisabled: { backgroundColor: '#6c757d', color: '#e9ecef', cursor: 'not-allowed', opacity: 0.65 },
-  error: { color: 'red', marginTop: '10px', marginBottom: '10px'},
-  loading: { marginTop: '10px', marginBottom: '10px'},
-  success: { color: 'green', marginTop: '10px', marginBottom: '10px'},
-  paginationControls: { marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  noResults: { marginTop: '10px' }
-};
+// Using global styles from index.css
 
 const CategoryManagementPage = () => {
   const [categories, setCategories] = useState([]);
@@ -27,11 +9,13 @@ const CategoryManagementPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryDescription, setNewCategoryDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 10; // Defined by API for categories list
 
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
@@ -48,71 +32,174 @@ const CategoryManagementPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage]);
+  }, [currentPage]); // PAGE_SIZE is constant, so not needed in deps if defined outside
 
-  useEffect(() => { fetchCategories(); }, [fetchCategories]);
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const handleCreateCategory = async (e) => {
     e.preventDefault();
-    if (!newCategoryName.trim()) { setError('Category name is required.'); return; }
-    setIsSubmitting(true); setError(''); setSuccessMessage('');
+    if (!newCategoryName.trim()) {
+      setError('Category name is required.');
+      return;
+    }
+    setIsSubmitting(true);
+    setError('');
+    setSuccessMessage('');
     try {
-      await categoryService.createCategory({ name: newCategoryName, description: newCategoryDescription });
+      const newCategoryData = {
+        name: newCategoryName,
+        description: newCategoryDescription
+      };
+      await categoryService.createCategory(newCategoryData);
       setSuccessMessage(`Category '${newCategoryName}' created successfully!`);
-      setNewCategoryName(''); setNewCategoryDescription(''); setCurrentPage(1); fetchCategories();
-    } catch (err) { setError(err.message || 'Failed to create category.');
-    } finally { setIsSubmitting(false); }
+      setNewCategoryName('');
+      setNewCategoryDescription('');
+      setCurrentPage(1);
+      fetchCategories();
+    } catch (err) {
+      setError(err.message || 'Failed to create category.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handlePageChange = (newPage) => { setCurrentPage(newPage); };
-  const handleEditCategory = (categoryId) => { alert(`Edit category ID: ${categoryId} - (Not implemented yet)`); };
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleEditCategory = (categoryId) => {
+    alert(`Edit category ID: ${categoryId} - (Not implemented yet)`);
+  };
+
   const handleDeleteCategory = (categoryId, categoryName) => {
     alert(`Category deletion for "${categoryName}" (ID: ${categoryId}) is temporarily disabled.`);
   };
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>Category Management</h1>
-      <div style={styles.formContainer}>
-        <h2>Add New Category</h2>
-        <form onSubmit={handleCreateCategory}>
-          <div style={styles.inputGroup}><label htmlFor="categoryName" style={styles.label}>Name:</label><input type="text" id="categoryName" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} style={styles.input} required /></div>
-          <div style={styles.inputGroup}><label htmlFor="categoryDescription" style={styles.label}>Description:</label><textarea id="categoryDescription" value={newCategoryDescription} onChange={(e) => setNewCategoryDescription(e.target.value)} style={styles.textarea} /></div>
-          {error && !isSubmitting && <p style={styles.error}>{error}</p>}
-          {successMessage && <p style={styles.success}>{successMessage}</p>}
-          <button type="submit" style={isSubmitting ? {...styles.button, ...styles.buttonDisabled} : styles.button} disabled={isSubmitting}>{isSubmitting ? 'Creating...' : 'Create Category'}</button>
-        </form>
-      </div>
-      <div style={styles.listContainer}>
-        <h2>Existing Categories</h2>
-        {isLoading && <p style={styles.loading}>Loading categories...</p>}
-        {!isLoading && error && categories.length === 0 && <p style={styles.error}>Could not load categories: {error}</p>}
-        {!isLoading && !error && categories.length === 0 && <p style={styles.noResults}>No categories found.</p>}
-        {!isLoading && !error && categories.length > 0 && (
-          <>
-            <table style={styles.table}>
-              <thead><tr><th style={styles.th}>ID</th><th style={styles.th}>Name</th><th style={styles.th}>Slug</th><th style={styles.th}>Description</th><th style={styles.th}>Actions</th></tr></thead>
-              <tbody>
-                {categories.map((category) => (
-                  <tr key={category.id}>
-                    <td style={styles.td}>{category.id}</td><td style={styles.td}>{category.name}</td><td style={styles.td}>{category.slug}</td><td style={styles.td}>{category.description}</td>
-                    <td style={styles.td}>
-                      <button onClick={() => handleEditCategory(category.id)} style={{...styles.actionButton, ...styles.editButton}} disabled={isLoading} title="Edit - Not implemented yet">Edit</button>
-                      <button onClick={() => handleDeleteCategory(category.id, category.name)} style={{...styles.actionButton, ...styles.deleteButtonDisabled}} disabled title="Delete - Temporarily disabled">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={styles.paginationControls}>
-              <button onClick={() => handlePageChange(pagination.current_page - 1)} disabled={pagination.current_page <= 1 || isLoading} style={styles.button}>Previous</button>
-              <span>Page {pagination.current_page} of {pagination.total_pages} (Total Categories: {pagination.total_records})</span>
-              <button onClick={() => handlePageChange(pagination.current_page + 1)} disabled={pagination.current_page >= pagination.total_pages || isLoading} style={styles.button}>Next</button>
+    <div className="container mt-3">
+      <h2 className="mb-3">Category Management</h2>
+
+      <div className="card mb-3">
+        <div className="card-header">
+            <h3 className="card-title mb-0">Add New Category</h3>
+        </div>
+        <div className="card-body">
+          <form onSubmit={handleCreateCategory}>
+            <div className="form-group">
+              <label htmlFor="categoryName" className="form-label">Name:</label>
+              <input
+                type="text"
+                id="categoryName"
+                className="form-control"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                required
+              />
             </div>
-          </>
-        )}
+            <div className="form-group">
+              <label htmlFor="categoryDescription" className="form-label">Description:</label>
+              <textarea
+                id="categoryDescription"
+                className="form-control"
+                value={newCategoryDescription}
+                onChange={(e) => setNewCategoryDescription(e.target.value)}
+                rows="3"
+              />
+            </div>
+            {/* Display errors and success messages related to form submission */}
+            {isSubmitting && <div className="spinner mt-2 mb-2"></div>}
+            {!isSubmitting && error && <div className="alert alert-danger mt-2">{error}</div>}
+            {!isSubmitting && successMessage && <div className="alert alert-success mt-2">{successMessage}</div>}
+            <button
+              type="submit"
+              className="btn btn-primary mt-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Category'}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+            <h3 className="card-title mb-0">Existing Categories</h3>
+        </div>
+        <div className="card-body">
+            {isLoading && !isSubmitting && <div className="text-center"><div className="spinner"></div> <p>Loading categories...</p></div>}
+            {!isLoading && !isSubmitting && error && categories.length === 0 && <div className="alert alert-danger">{error}</div>} {/* Error specifically for list loading */}
+            {!isLoading && !isSubmitting && !error && categories.length === 0 && <div className="alert alert-info">No categories found.</div>}
+
+            {!isLoading && !error && categories.length > 0 && (
+            <>
+                <div className="table-responsive">
+                <table className="table table-hover">
+                <thead>
+                    <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {categories.map((category) => (
+                    <tr key={category.id}>
+                        <td>{category.id}</td>
+                        <td>{category.name}</td>
+                        <td>{category.slug}</td>
+                        <td>{category.description}</td>
+                        <td>
+                        <button
+                            onClick={() => handleEditCategory(category.id)}
+                            className="btn btn-warning btn-sm me-1" // Added me-1 for margin
+                            disabled={isLoading || isSubmitting}
+                            title="Edit - Not implemented yet"
+                        >
+                            Edit
+                        </button>
+                        <button
+                            onClick={() => handleDeleteCategory(category.id, category.name)}
+                            className="btn btn-secondary btn-sm" // Changed to btn-secondary for disabled visual
+                            disabled // Always disabled
+                            title="Delete - Temporarily disabled"
+                        >
+                            Delete
+                        </button>
+                        </td>
+                    </tr>
+                    ))}
+                </tbody>
+                </table>
+                </div>
+                <div className="pagination-controls mt-3 d-flex justify-content-between align-items-center">
+                <button
+                    onClick={() => handlePageChange(pagination.current_page - 1)}
+                    disabled={pagination.current_page <= 1 || isLoading || isSubmitting}
+                    className="btn btn-secondary"
+                >
+                    Previous
+                </button>
+                <span>
+                    Page {pagination.current_page} of {pagination.total_pages} (Total Categories: {pagination.total_records})
+                </span>
+                <button
+                    onClick={() => handlePageChange(pagination.current_page + 1)}
+                    disabled={pagination.current_page >= pagination.total_pages || isLoading || isSubmitting}
+                    className="btn btn-secondary"
+                >
+                    Next
+                </button>
+                </div>
+            </>
+            )}
+        </div>
       </div>
     </div>
   );
 };
+
 export default CategoryManagementPage;

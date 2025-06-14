@@ -1,43 +1,68 @@
 import React from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'; // Use NavLink for active styling
 import { useAuth } from '../../contexts/AuthContext';
+import './Layout.css'; // Import the CSS file
 
 const AdminLayout = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  // Basic inline styles for layout
-  const styles = {
-    layout: { display: 'flex', minHeight: '100vh' },
-    sidebar: { width: '250px', background: '#333', color: 'white', padding: '20px' },
-    mainContent: { flexGrow: 1, padding: '20px', background: '#f4f4f4' },
-    header: { background: '#fff', padding: '10px 20px', borderBottom: '1px solid #ddd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    navLink: { display: 'block', color: 'white', padding: '10px 0', textDecoration: 'none' },
-    userInfo: { fontSize: '0.9em'},
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      // Handle logout error if needed, e.g., show a notification
+      console.error("Logout failed:", error);
+      // Still navigate to login page as a fallback
+      navigate('/login');
+    }
   };
 
   return (
-    <div style={styles.layout}>
-      <aside style={styles.sidebar}>
-        <h2>Admin Panel</h2>
-        <nav>
-          <Link to="/admin" style={styles.navLink}>Dashboard</Link>
-          <Link to="/admin/users" style={styles.navLink}>User Management</Link>
-          <Link to="/admin/listings" style={styles.navLink}>Listing Management</Link>
-          <Link to="/admin/categories" style={styles.navLink}>Category Management</Link>
+    <div className="admin-layout">
+      <aside className="admin-layout__sidebar">
+        <div className="admin-layout__sidebar-header">
+          <h1 className="admin-layout__sidebar-title">Admin</h1>
+        </div>
+        <nav className="admin-layout__nav">
+          <NavLink
+            to="/admin"
+            end // Important for NavLink to match exactly for dashboard/index route
+            className={({ isActive }) => isActive ? "admin-layout__nav-link active" : "admin-layout__nav-link"}
+          >
+            Dashboard
+          </NavLink>
+          <NavLink
+            to="/admin/users"
+            className={({ isActive }) => isActive ? "admin-layout__nav-link active" : "admin-layout__nav-link"}
+          >
+            User Management
+          </NavLink>
+          <NavLink
+            to="/admin/listings"
+            className={({ isActive }) => isActive ? "admin-layout__nav-link active" : "admin-layout__nav-link"}
+          >
+            Listing Management
+          </NavLink>
+          <NavLink
+            to="/admin/categories"
+            className={({ isActive }) => isActive ? "admin-layout__nav-link active" : "admin-layout__nav-link"}
+          >
+            Category Management
+          </NavLink>
         </nav>
       </aside>
-      <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
-        <header style={styles.header}>
-          <div>Welcome, {user?.email || user?.name || 'Admin'}!</div>
-          <button onClick={handleLogout} style={{padding: '8px 15px', cursor: 'pointer', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px'}}>Logout</button>
+      <div className="admin-layout__content-wrapper">
+        <header className="admin-layout__header">
+          <div className="admin-layout__user-info">
+            Welcome, {user?.email || user?.displayName || user?.name || 'Admin'}!
+          </div>
+          <button onClick={handleLogout} className="btn btn-danger">
+            Logout
+          </button>
         </header>
-        <main style={styles.mainContent}>
+        <main className="admin-layout__main-content">
           <Outlet /> {/* Nested admin pages will render here */}
         </main>
       </div>

@@ -2,14 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+// It's good practice to have specific styles for a page if they are unique,
+// but for now, we'll try to use global styles from index.css as much as possible.
+// If needed, create LoginPage.css and import it.
+// For this iteration, we'll add a few specific styles to index.css for .login-page-container and .login-box,
+// and use other global classes like .form-control, .btn, .alert, etc.
+
 const LoginPage = () => {
-  const [email, setEmail] = useState('abebe@gmail.com'); // Pre-fill for convenience
-  const [password, setPassword] = useState('abebe@123'); // Pre-fill for convenience
+  const [email, setEmail] = useState('abebe@gmail.com');
+  const [password, setPassword] = useState('abebe@123');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, isAuthenticated, isLoading: authIsLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation(); // To redirect after login
+  const location = useLocation();
 
   useEffect(() => {
     if (isAuthenticated && !authIsLoading) {
@@ -24,66 +30,68 @@ const LoginPage = () => {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      // Navigation is handled by useEffect watching isAuthenticated
+      // Navigation is handled by useEffect
     } catch (err) {
-      setError(err.message || 'Failed to login. Check credentials and console.');
+      setError(err.message || 'Failed to login. Check credentials.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Styles (copied from previous version for brevity)
-  const styles = {
-    container: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f0f2f5', fontFamily: 'Arial, sans-serif' },
-    loginBox: { padding: '40px', backgroundColor: '#ffffff', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', textAlign: 'center', width: '100%', maxWidth: '400px' },
-    form: { display: 'flex', flexDirection: 'column' },
-    inputGroup: { marginBottom: '20px', textAlign: 'left' },
-    input: { width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '16px', boxSizing: 'border-box' },
-    button: { padding: '12px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', fontSize: '16px', cursor: 'pointer', transition: 'background-color 0.3s ease', opacity: 1 },
-    buttonDisabled: { opacity: 0.6, cursor: 'not-allowed' },
-    error: { color: 'red', marginBottom: '15px' },
-    loadingSpinner: { /* Basic spinner for loading */ display: 'inline-block', border: '4px solid #f3f3f3', borderTop: '4px solid #3498db', borderRadius: '50%', width: '14px', height: '14px', animation: 'spin 1s linear infinite', marginLeft: '10px'}
-  };
-  // Add keyframes for spin animation if not using global CSS for it
-  const keyframesStyle = `
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  `;
+  // Inject keyframes for spinner if not already global (it is in current index.css)
+  // No, spinner class is already in index.css with its keyframes.
 
-
-  if (authIsLoading && !isAuthenticated) { // Show loading indicator if auth state is being determined
-    return <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>Loading authentication...</div>;
+  if (authIsLoading && !isAuthenticated) {
+    return (
+      <div className="loading-fullscreen-container"> {/* Assuming this class could be global for full screen loaders */}
+        <div className="spinner"></div>
+        <p>Loading authentication...</p>
+      </div>
+    );
   }
 
-
   return (
-    <>
-      <style>{keyframesStyle}</style> {/* Inject keyframes */}
-      <div style={styles.container}>
-        <div style={styles.loginBox}>
-          <h2>Admin Login</h2>
-          {error && <p style={styles.error}>{error}</p>}
+    <div className="login-page-container"> {/* Specific class for login page centering */}
+      <div className="login-box card"> {/* Use .card for consistent box styling */}
+        <div className="card-body"> {/* Use .card-body for padding */}
+          <h2 className="card-title text-center mb-3">Admin Login</h2>
+          {error && <div className="alert alert-danger">{error}</div>}
 
-          <form onSubmit={handleLogin} style={styles.form}>
-            <div style={styles.inputGroup}>
-              <label htmlFor="email">Email</label>
-              <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={styles.input}/>
+          <form onSubmit={handleLogin}>
+            <div className="form-group">
+              <label htmlFor="email" className="form-label">Email</label>
+              <input
+                type="email"
+                id="email"
+                className="form-control"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-            <div style={styles.inputGroup}>
-              <label htmlFor="password">Password</label>
-              <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={styles.input}/>
+            <div className="form-group">
+              <label htmlFor="password" className="form-label">Password</label>
+              <input
+                type="password"
+                id="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
-            <button type="submit" style={isSubmitting ? {...styles.button, ...styles.buttonDisabled} : styles.button} disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="btn btn-primary w-100" // Added w-100 for full width
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Logging in...' : 'Login'}
-              {isSubmitting && <span style={styles.loadingSpinner}></span>}
+              {isSubmitting && <span className="spinner"></span>}
             </button>
           </form>
-          {/* Removed direct token input for cleaner Firebase flow based on plan */}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

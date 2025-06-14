@@ -1,0 +1,79 @@
+/* Styles for AdminLayout.jsx */
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-layout__sidebar {
+  width: 250px;
+  background-color: var(--dark-color); /* Using CSS variable */
+  color: var(--light-color);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-layout__sidebar-header {
+  padding-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--secondary-color);
+}
+
+.admin-layout__sidebar-title {
+  color: #fff; /* Explicit white for title */
+  font-size: 1.75rem;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.admin-layout__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm); /* Space between nav links */
+}
+
+.admin-layout__nav-link {
+  display: block;
+  color: #adb5bd; /* Lighter gray for nav links */
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.admin-layout__nav-link:hover,
+.admin-layout__nav-link.active { /* Add .active class for active links via NavLink */
+  color: #fff;
+  background-color: var(--primary-color);
+}
+
+.admin-layout__content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Takes remaining space */
+  background-color: var(--background-color); /* Page background for content area */
+}
+
+.admin-layout__header {
+  background-color: var(--component-background-color); /* White background for header */
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-layout__user-info {
+  font-size: 0.9em;
+  color: var(--text-muted-color);
+}
+
+/* Logout button in header will use .btn .btn-danger from index.css */
+
+.admin-layout__main-content {
+  flex-grow: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto; /* Add scroll for content overflow */
+}
