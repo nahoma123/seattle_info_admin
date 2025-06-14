@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import listingService from '../services/listingService'; // Import the listingService
-import { useLocation } from 'react-router-dom'; // To read query params for filtering
+import listingService from '../services/listingService'; // listingService now has updated methods
+import { useLocation } from 'react-router-dom';
 
-// Basic inline styles (consider moving to a CSS file for larger applications)
 const styles = {
   container: { padding: '20px' },
   title: { marginBottom: '20px' },
@@ -10,7 +9,7 @@ const styles = {
   th: { border: '1px solid #ddd', padding: '10px', background: '#f4f4f4', textAlign: 'left' },
   td: { border: '1px solid #ddd', padding: '10px', textAlign: 'left', verticalAlign: 'top' },
   button: { marginRight: '10px', padding: '5px 10px', cursor: 'pointer', marginBottom: '5px' },
-  actionCell: { minWidth: '200px' }, // Enough space for buttons and reason input
+  actionCell: { minWidth: '200px' },
   error: { color: 'red', marginTop: '10px'},
   loading: { marginTop: '10px'},
   filterSection: { marginBottom: '20px'},
@@ -23,10 +22,9 @@ const ListingManagementPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const location = useLocation();
-  const [statusFilter, setStatusFilter] = useState('pending_approval'); // Default filter
-  const [rejectionReasons, setRejectionReasons] = useState({}); // { listingId: reason }
+  const [statusFilter, setStatusFilter] = useState('pending_approval');
+  const [rejectionReasons, setRejectionReasons] = useState({});
 
-  // Determine initial filter from URL query params
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const status = queryParams.get('status');
@@ -43,8 +41,12 @@ const ListingManagementPage = () => {
       if (statusFilter) {
         params.status = statusFilter;
       }
-      const data = await listingService.getAdminListings(params);
-      setListings(data || []);
+      // Use the updated service function: getListingsFiltered
+      const responseData = await listingService.getListingsFiltered(params);
+      // Adjust based on actual response structure from GET /api/v1/listings
+      // If it's { data: [], pagination: {} }, use responseData.data
+      // For now, assuming it might be responseData directly or responseData.data
+      setListings(responseData.data || responseData || []);
     } catch (err) {
       setError(err.message || 'Failed to fetch listings.');
       setListings([]);
@@ -57,28 +59,50 @@ const ListingManagementPage = () => {
     fetchListings();
   }, [fetchListings]);
 
-  const handleUpdateStatus = async (listingId, newStatus) => {
-    setIsLoading(true); // Consider a row-specific loading indicator later
-    let reason = '';
-    if (newStatus === 'rejected') {
-      reason = rejectionReasons[listingId] || ''; // Get reason from state
-      if (!reason) {
-        // Basic validation, could be more robust
-        alert('Rejection reason is required when rejecting a listing.');
-        setIsLoading(false);
-        return;
-      }
-    }
-
+  const handleApprove = async (listingId) => {
+    setIsLoading(true);
+    setError('');
     try {
-      await listingService.updateListingStatus(listingId, newStatus, reason);
-      setRejectionReasons(prev => ({ ...prev, [listingId]: '' })); // Clear reason after successful reject
-      fetchListings(); // Refresh list
+      // Use the new dedicated approveListing function
+      await listingService.approveListing(listingId);
+      fetchListings();
     } catch (err) {
-      setError(err.message || `Failed to update status for listing ${listingId}.`);
-      setIsLoading(false); // Only reset general loading if fetchListings doesn't run or also fails
+      setError(err.message || `Failed to approve listing ${listingId}.`);
+      setIsLoading(false);
     }
-    // setIsLoading(false) will be called in fetchListings' finally block
+  };
+
+  const handleReject = async (listingId) => {
+    setIsLoading(true);
+    setError('');
+    const reason = rejectionReasons[listingId] || '';
+    if (!reason.trim()) { // Check if reason is empty or only whitespace
+      setError('Rejection reason is required when rejecting a listing.');
+      setIsLoading(false);
+      return;
+    }
+    try {
+      // Use updateListingStatusAdmin for rejection
+      await listingService.updateListingStatusAdmin(listingId, 'rejected', reason);
+      setRejectionReasons(prev => ({ ...prev, [listingId]: '' }));
+      fetchListings();
+    } catch (err) {
+      setError(err.message || `Failed to reject listing ${listingId}.`);
+      setIsLoading(false);
+    }
+  };
+
+  const handleAdminRemove = async (listingId) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      // Use updateListingStatusAdmin for admin_removed
+      await listingService.updateListingStatusAdmin(listingId, 'admin_removed', ''); // No reason needed for admin_removed
+      fetchListings();
+    } catch (err) {
+      setError(err.message || `Failed to remove listing ${listingId}.`);
+      setIsLoading(false);
+    }
   };
 
   const handleReasonChange = (listingId, reason) => {
@@ -134,7 +158,7 @@ const ListingManagementPage = () => {
                   {(listing.description || '').substring(0, 50)}
                   {listing.description && listing.description.length > 50 ? '...' : ''}
                 </td>
-                <td style={styles.td}>{listing.submitter_id || listing.userId || 'N/A'}</td>
+                <td style={styles.td}>{listing.submitter_id || listing.user_id || 'N/A'}</td> {/* Adjusted to check user_id as well */}
                 <td style={styles.td}>{listing.category_id || 'N/A'}</td>
                 <td style={styles.td}>{listing.status}</td>
                 <td style={styles.td}>{new Date(listing.creation_date || listing.created_at).toLocaleDateString()}</td>
@@ -142,7 +166,7 @@ const ListingManagementPage = () => {
                   {listing.status === 'pending_approval' && (
                     <>
                       <button
-                        onClick={() => handleUpdateStatus(listing.id, 'active')}
+                        onClick={() => handleApprove(listing.id)}
                         style={{...styles.button, backgroundColor: 'green'}}
                         disabled={isLoading}
                       >
@@ -157,19 +181,18 @@ const ListingManagementPage = () => {
                           disabled={isLoading}
                         />
                         <button
-                          onClick={() => handleUpdateStatus(listing.id, 'rejected')}
+                          onClick={() => handleReject(listing.id)}
                           style={{...styles.button, backgroundColor: 'red', marginTop: '5px'}}
-                          disabled={isLoading || !rejectionReasons[listing.id]}
+                          disabled={isLoading || !(rejectionReasons[listing.id] || '').trim()} // Disable if reason is empty
                         >
                           Reject
                         </button>
                       </div>
                     </>
                   )}
-                  {/* For already active/other status listings, provide other actions */}
                   {listing.status === 'active' && (
                      <button
-                        onClick={() => handleUpdateStatus(listing.id, 'admin_removed')}
+                        onClick={() => handleAdminRemove(listing.id)}
                         style={{...styles.button, backgroundColor: 'orange'}}
                         disabled={isLoading}
                       >

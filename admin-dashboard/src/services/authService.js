@@ -10,7 +10,6 @@ import { firebaseConfig } from '../firebaseConfig'; // Import the configuration
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-console.log("Firebase Auth initialized in authService.js");
 
 /**
  * Signs in a user with email and password using Firebase.
@@ -23,10 +22,8 @@ export const signInUser = async (email, password) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     const idToken = await user.getIdToken();
-    console.log("Firebase ID Token (after sign-in in authService):", idToken);
     return { token: idToken, user: { email: user.email, uid: user.uid } }; // Return token and basic user info
   } catch (error) {
-    console.error("Firebase Sign In Error in authService:", error);
     // Transform Firebase error to a more generic error message if desired
     throw new Error(error.message || 'Failed to sign in.');
   }
@@ -39,9 +36,7 @@ export const signInUser = async (email, password) => {
 export const signOutUser = async () => {
   try {
     await firebaseSignOutInternal(auth);
-    console.log("User signed out from Firebase in authService.");
   } catch (error) {
-    console.error("Firebase Sign Out Error in authService:", error);
     throw new Error(error.message || 'Failed to sign out.');
   }
 };
@@ -69,7 +64,6 @@ export const verifyTokenAndGetAdminDetails = async (token) => {
     });
     return response.data; // e.g., { id, email, role, ... }
   } catch (error) {
-    console.error('Error verifying token with backend /auth/me', error);
     throw error;
   }
   */

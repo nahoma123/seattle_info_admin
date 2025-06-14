@@ -35,7 +35,7 @@ const AdminLayout = () => {
       <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
         <header style={styles.header}>
           <div>Welcome, {user?.email || user?.name || 'Admin'}!</div>
-          <button onClick={handleLogout}>Logout</button>
+          <button onClick={handleLogout} style={{padding: '8px 15px', cursor: 'pointer', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px'}}>Logout</button>
         </header>
         <main style={styles.mainContent}>
           <Outlet /> {/* Nested admin pages will render here */}

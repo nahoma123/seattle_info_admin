@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import categoryService from '../services/categoryService'; // Import the categoryService
+import categoryService from '../services/categoryService'; // categoryService has updated methods
 
-// Basic inline styles
 const styles = {
   container: { padding: '20px', maxWidth: '800px', margin: '0 auto' },
   title: { marginBottom: '20px' },
@@ -35,20 +34,27 @@ const styles = {
     backgroundColor: '#007bff',
     color: 'white',
     border: 'none',
-    borderRadius: '4px'
+    borderRadius: '4px',
+    marginRight: '10px'
   },
   buttonDisabled: { backgroundColor: '#aaa' },
   listContainer: { marginTop: '20px' },
   table: { width: '100%', borderCollapse: 'collapse', marginTop: '10px' },
   th: { border: '1px solid #ddd', padding: '10px', background: '#f4f4f4', textAlign: 'left' },
   td: { border: '1px solid #ddd', padding: '10px', textAlign: 'left' },
+  actionButton: { padding: '5px 10px', cursor: 'pointer', marginRight: '5px', border: 'none', borderRadius: '4px' },
+  editButton: { backgroundColor: '#ffc107' },
+  deleteButton: { backgroundColor: '#dc3545', color: 'white' },
   error: { color: 'red', marginTop: '10px', marginBottom: '10px'},
   loading: { marginTop: '10px', marginBottom: '10px'},
-  success: { color: 'green', marginTop: '10px', marginBottom: '10px'}
+  success: { color: 'green', marginTop: '10px', marginBottom: '10px'},
+  paginationControls: { marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  noResults: { marginTop: '10px' }
 };
 
 const CategoryManagementPage = () => {
   const [categories, setCategories] = useState([]);
+  const [pagination, setPagination] = useState({ current_page: 1, page_size: 10, total_records: 0, total_pages: 1 });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -57,19 +63,25 @@ const CategoryManagementPage = () => {
   const [newCategoryDescription, setNewCategoryDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10; // Or get from API if dynamic
+
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     setError('');
     try {
-      const data = await categoryService.getCategories();
-      setCategories(data || []);
+      const params = { page: currentPage, page_size: PAGE_SIZE };
+      const response = await categoryService.getCategories(params); // Expects { data, pagination }
+      setCategories(response.data || []);
+      setPagination(response.pagination || { current_page: currentPage, page_size: PAGE_SIZE, total_records: 0, total_pages: 1 });
     } catch (err) {
       setError(err.message || 'Failed to fetch categories.');
       setCategories([]);
+      setPagination({ current_page: currentPage, page_size: PAGE_SIZE, total_records: 0, total_pages: 1 });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentPage]); // Dependency on currentPage
 
   useEffect(() => {
     fetchCategories();
@@ -89,10 +101,12 @@ const CategoryManagementPage = () => {
         name: newCategoryName,
         description: newCategoryDescription
       };
+      // Uses corrected createCategory targeting POST /api/v1/categories/admin
       await categoryService.createCategory(newCategoryData);
       setSuccessMessage(`Category '${newCategoryName}' created successfully!`);
       setNewCategoryName('');
       setNewCategoryDescription('');
+      setCurrentPage(1); // Go to first page to see new category if list was empty or on another page
       fetchCategories(); // Refresh list
     } catch (err) {
       setError(err.message || 'Failed to create category.');
@@ -100,6 +114,34 @@ const CategoryManagementPage = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleEditCategory = (categoryId) => {
+    // Placeholder for edit functionality
+    alert(`Edit category ID: ${categoryId} - (Not implemented yet)`);
+    // In a real app, this would open a modal or navigate to an edit form.
+  };
+
+  const handleDeleteCategory = async (categoryId, categoryName) => {
+    // Placeholder for delete functionality
+    if (window.confirm(`Are you sure you want to delete category "${categoryName}" (ID: ${categoryId})?`)) {
+      setIsLoading(true); // Use general loading or a row-specific one
+      setError('');
+      setSuccessMessage('');
+      try {
+        await categoryService.deleteCategoryAdmin(categoryId);
+        setSuccessMessage(`Category "${categoryName}" deleted successfully.`);
+        fetchCategories(); // Refresh the list
+      } catch (err) {
+        setError(err.message || `Failed to delete category "${categoryName}".`);
+        setIsLoading(false);
+      }
+    }
+  };
+
 
   return (
     <div style={styles.container}>
@@ -128,7 +170,7 @@ const CategoryManagementPage = () => {
               style={styles.textarea}
             />
           </div>
-          {error && <p style={styles.error}>{error}</p>}
+          {error && !isSubmitting && <p style={styles.error}>{error}</p>} {/* Show general errors when not submitting form */}
           {successMessage && <p style={styles.success}>{successMessage}</p>}
           <button
             type="submit"
@@ -144,31 +186,55 @@ const CategoryManagementPage = () => {
         <h2>Existing Categories</h2>
         {isLoading && <p style={styles.loading}>Loading categories...</p>}
         {!isLoading && error && categories.length === 0 && <p style={styles.error}>Could not load categories: {error}</p>}
-        {!isLoading && !error && categories.length === 0 && <p>No categories found.</p>}
+        {!isLoading && !error && categories.length === 0 && <p style={styles.noResults}>No categories found.</p>}
 
         {!isLoading && !error && categories.length > 0 && (
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>ID</th>
-                <th style={styles.th}>Name</th>
-                <th style={styles.th}>Slug</th>
-                <th style={styles.th}>Description</th>
-                {/* Add Created At/Updated At if available and needed */}
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((category) => (
-                <tr key={category.id}>
-                  <td style={styles.td}>{category.id}</td>
-                  <td style={styles.td}>{category.name}</td>
-                  <td style={styles.td}>{category.slug}</td>
-                  <td style={styles.td}>{category.description}</td>
-                  {/* Add more actions like Edit/Delete here if implemented */}
+          <>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>ID</th>
+                  <th style={styles.th}>Name</th>
+                  <th style={styles.th}>Slug</th>
+                  <th style={styles.th}>Description</th>
+                  <th style={styles.th}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {categories.map((category) => (
+                  <tr key={category.id}>
+                    <td style={styles.td}>{category.id}</td>
+                    <td style={styles.td}>{category.name}</td>
+                    <td style={styles.td}>{category.slug}</td>
+                    <td style={styles.td}>{category.description}</td>
+                    <td style={styles.td}>
+                      <button onClick={() => handleEditCategory(category.id)} style={{...styles.actionButton, ...styles.editButton}} disabled={isLoading}>Edit</button>
+                      <button onClick={() => handleDeleteCategory(category.id, category.name)} style={{...styles.actionButton, ...styles.deleteButton}} disabled={isLoading}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={styles.paginationControls}>
+              <button
+                onClick={() => handlePageChange(pagination.current_page - 1)}
+                disabled={pagination.current_page <= 1 || isLoading}
+                style={styles.button}
+              >
+                Previous
+              </button>
+              <span>
+                Page {pagination.current_page} of {pagination.total_pages} (Total Categories: {pagination.total_records})
+              </span>
+              <button
+                onClick={() => handlePageChange(pagination.current_page + 1)}
+                disabled={pagination.current_page >= pagination.total_pages || isLoading}
+                style={styles.button}
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

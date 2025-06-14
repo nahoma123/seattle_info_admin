@@ -26,7 +26,6 @@ const LoginPage = () => {
       await login(email, password);
       // Navigation is handled by useEffect watching isAuthenticated
     } catch (err) {
-      console.error("Login page error:", err);
       setError(err.message || 'Failed to login. Check credentials and console.');
     } finally {
       setIsSubmitting(false);
