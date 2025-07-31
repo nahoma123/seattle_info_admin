@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  FRONTEND_IMAGE_NAME: ghcr.io/nahoma123/seattle_info_admin_frontend
+  FRONTEND_IMAGE_NAME: ghcr.io/nahoma123/seattle_info_admin
 
 jobs:
   build-and-push-frontend-image:
@@ -79,7 +79,7 @@ jobs:
       SERVER_USER: ${{ secrets.SERVER_USER }}
       SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
       GITHUB_LOGIN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      FRONTEND_IMAGE_NAME: ghcr.io/nahoma123/seattle_info_admin_frontend
+      FRONTEND_IMAGE_NAME: ghcr.io/nahoma123/seattle_info_admin
 
     steps:
       - name: Deploy Frontend to Server via SSH
