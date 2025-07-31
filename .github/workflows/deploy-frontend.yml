@@ -26,7 +26,6 @@ jobs:
 
       - name: Install frontend dependencies and build
         run: |
-          cd admin-dashboard
           npm install
           npm run build
         env:
@@ -61,8 +60,8 @@ jobs:
       - name: Build and push frontend Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./admin-dashboard
-          file: ./admin-dashboard/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
