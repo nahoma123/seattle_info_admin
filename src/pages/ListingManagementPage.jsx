@@ -54,8 +54,8 @@ const ListingManagementPage = () => {
       if (filterSearchTerm.trim()) currentParams.search_term = filterSearchTerm.trim(); else delete currentParams.search_term;
 
       const responseData = await listingService.getListingsFiltered(currentParams);
-      setListings(responseData.data || responseData || []);
-      setPagination(responseData.pagination || { current_page: fetchParams.page, page_size: fetchParams.page_size, total_records: (responseData.data || responseData || []).length, total_pages: 1 });
+      setListings(responseData.data || []);
+      setPagination(responseData.pagination || { current_page: fetchParams.page, page_size: fetchParams.page_size, total_records: (responseData.data || []).length, total_pages: 1 });
     } catch (err) {
       setError(err.message || 'Failed to fetch listings.');
       setListings([]);
