@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api/v1': {
-        target: 'http://13.39.193.186:80',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8082',
         changeOrigin: true,
       },
     },
