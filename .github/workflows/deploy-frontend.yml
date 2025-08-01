@@ -26,6 +26,7 @@ jobs:
 
       - name: Install frontend dependencies and build
         run: |
+          echo "VITE_FIREBASE_API_KEY is set: $VITE_FIREBASE_API_KEY"
           npm install
           npm run build
         env:
