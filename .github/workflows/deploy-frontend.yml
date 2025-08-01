@@ -12,6 +12,7 @@ jobs:
   build-and-push-frontend-image:
     name: Build Frontend Docker image and push to GHCR
     runs-on: ubuntu-latest
+    environment: SERVER_HOST
     permissions:
       contents: read
       packages: write
