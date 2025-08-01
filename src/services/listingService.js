@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL for general API calls (e.g., public listing search)
-const API_V1_BASE_URL = '/api/v1';
+const API_V1_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 // Base URL for specific admin actions that might be namespaced under /admin if any other than listings admin actions
 const ADMIN_API_BASE_URL = '/api/v1/admin'; // Keep for consistency if other admin calls use it, but listings admin actions are specific
 
