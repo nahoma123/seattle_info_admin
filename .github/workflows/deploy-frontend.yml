@@ -98,11 +98,13 @@ jobs:
           sudo docker pull ${{ env.FRONTEND_IMAGE_NAME }}:${{ needs.build-and-push-frontend-image.outputs.version }}
           
           echo "Stopping and removing old frontend container (if exists)..."
+          # Using || true ensures the script doesn't fail if the container isn't running
           sudo docker stop seattle_info_admin_frontend || true
           sudo docker rm seattle_info_admin_frontend || true
           
-          echo "Running new frontend container..."
-          sudo docker run -d --name seattle_info_admin_frontend -p 8080:80 ${{ env.FRONTEND_IMAGE_NAME }}:${{ needs.build-and-push-frontend-image.outputs.version }}
+          echo "Running new frontend container on port 8081..."
+          # --- THIS IS THE CORRECTED LINE ---
+          sudo docker run -d --name seattle_info_admin_frontend -p 8081:80 ${{ env.FRONTEND_IMAGE_NAME }}:${{ needs.build-and-push-frontend-image.outputs.version }}
           
           echo "Pruning old Docker images..."
           sudo docker image prune -af
