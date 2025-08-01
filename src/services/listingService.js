@@ -38,10 +38,9 @@ export const getListingsFiltered = async (params) => {
   const apiClient = createApiV1AuthorizedInstance(); // Uses /api/v1 base
   try {
     const response = await apiClient.get('/listings', { params });
-    // Assuming the public endpoint also returns data in response.data
-    // If it's paginated like { "data": [], "pagination": {}}, return response.data.data
-    // For now, assume response.data is the array as per previous assumptions for admin list.
-    return response.data.data || response.data; // Handle if backend nests under 'data' or not
+    // The component expects the full response object which should include
+    // a 'data' property (the array of listings) and a 'pagination' property.
+    return response.data;
   } catch (error) {
     console.error('Error fetching listings (filtered):', error.response?.data || error.message);
     throw error.response?.data || error.message;
