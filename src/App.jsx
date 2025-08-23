@@ -8,11 +8,13 @@ import CategoryManagementPage from './pages/CategoryManagementPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
 import AdminLayout from './components/Layout/AdminLayout'; // Import AdminLayout
+import AccountDeletionPolicyPage from './pages/AccountDeletionPolicyPage'; // Import the new page
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/account-deletion-policy" element={<AccountDeletionPolicyPage />} />
 
       {/* Admin Routes: Wrapped by ProtectedRoute and AdminLayout */}
       <Route
