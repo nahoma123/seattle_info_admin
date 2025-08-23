@@ -43,7 +43,7 @@ const AccountDeletionPolicyPage = () => {
                 </ol>
 
                 <h2>Alternative Deletion Method</h2>
-                <p>If you are unable to access the app, you can request account deletion by sending an email to our support team at <a href="mailto:your-support-email@example.com"><strong>your-support-email@example.com</strong></a>. Please include your username or the email address associated with your account to help us identify it.</p>
+                <p>If you are unable to access the app, you can request account deletion by sending an email to our support team at <a href="mailto:nahomasnake12@gmail.com"><strong>nahomasnake12@gmail.com</strong></a>. Please include your username or the email address associated with your account to help us identify it.</p>
 
                 <h2>Data Deletion and Retention</h2>
                 <p>Upon receiving a deletion request through the app or via email, we will permanently delete your account and associated personal data. Here’s what that includes:</p>
